@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiMo TTS - 语音合成</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --text-secondary: #86868b;
+    --accent: #0071e3;
+    --accent-hover: #0077ED;
+    --border: #d2d2d7;
+    --input-bg: #f5f5f7;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    font-size: 15px;
+    color: var(--text-secondary);
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field:last-child {
+    margin-bottom: 0;
+  }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .field textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    line-height: 1.5;
+    resize: vertical;
+    background: var(--input-bg);
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .field textarea.small {
+    min-height: 72px;
+  }
+
+  .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    background: #fff;
+  }
+
+  .field textarea::placeholder {
+    color: #b0b0b0;
+  }
+
+  .select-wrap {
+    position: relative;
+  }
+
+  .select-wrap select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--input-bg);
+    color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .select-wrap select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+  }
+
+  .select-wrap::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--text-secondary);
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px 24px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* Loading overlay */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(245, 245, 247, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .loading-overlay.visible {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .loading-subtext {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .loading-time {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .player-card {
+    display: none;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .player-card.visible {
+    display: block;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .player-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .player-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .player-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: #fff;
+  }
+
+  .player-info h3 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .player-info p {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  audio {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  audio::-webkit-media-controls-panel {
+    background: var(--input-bg);
+    border-radius: 8px;
+  }
+
+  .error-msg {
+    display: none;
+    background: #fff2f2;
+    border: 1px solid #ffccc7;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-top: 16px;
+    font-size: 14px;
+    color: #cf1322;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .error-msg.visible {
+    display: block;
+  }
+
+  .player-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-download:hover {
+    background: var(--input-bg);
+    border-color: #b0b0b0;
+  }
+
+  .btn-download svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 32px 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .tip {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  .char-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  /* Style section */
+  .style-section {
+    margin-bottom: 20px;
+  }
+
+  .style-group-select-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .style-group-select-row label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .style-group-select-row select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--input-bg);
+    color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2386868b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .style-group {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .style-group:last-of-type {
+    border-bottom: none;
+  }
+
+  .style-group-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .style-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .style-tag {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #fff;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .style-tag:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .style-tag.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    animation: tagPop 0.2s ease;
+  }
+
+  @keyframes tagPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  /* Selected tags summary */
+  .selected-summary {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    background: #f0f5ff;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--accent);
+    animation: fadeUp 0.2s ease;
+  }
+
+  .selected-summary.visible {
+    display: flex;
+  }
+
+  .selected-summary-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .selected-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .selected-chip-remove {
+    cursor: pointer;
+    opacity: 0.7;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .selected-chip-remove:hover {
+    opacity: 1;
+  }
+
+  .btn-clear-all {
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+
+  .btn-clear-all:hover {
+    color: var(--accent);
+  }
+
+  /* Custom style */
+  .style-custom {
+    padding: 10px 0;
+  }
+
+  .custom-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .custom-toggle:hover {
+    opacity: 0.7;
+  }
+
+  .custom-toggle-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+  }
+
+  .custom-toggle.open .custom-toggle-icon {
+    transform: rotate(45deg);
+  }
+
+  .custom-body {
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .custom-body.open {
+    max-height: 200px;
+    opacity: 1;
+  }
+
+  .custom-body textarea {
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 14px;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .custom-body textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    background: #fff;
+  }
+
+  .custom-body textarea::placeholder {
+    color: #b0b0b0;
+  }
+
+  /* Voice mode tabs */
+  .voice-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    background: var(--input-bg);
+    border-radius: 10px;
+    padding: 3px;
+  }
+
+  .voice-tab {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .voice-tab.active {
+    background: #fff;
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  .voice-tab:hover:not(.active) {
+    color: var(--text);
+  }
+
+  /* Clone upload area */
+  .clone-panel {
+    display: none;
+  }
+
+  .clone-panel.visible {
+    display: block;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--input-bg);
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: #f0f5ff;
+  }
+
+  .upload-zone.has-file {
+    border-color: var(--accent);
+    border-style: solid;
+    background: #f0f5ff;
+    padding: 16px 20px;
+  }
+
+  .upload-zone.dragover {
+    border-color: var(--accent);
+    background: #e8f0fe;
+  }
+
+  .upload-icon {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 8px;
+    color: var(--text-secondary);
+  }
+
+  .upload-zone.has-file .upload-icon {
+    margin: 0;
+  }
+
+  .upload-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .upload-text strong {
+    color: var(--accent);
+  }
+
+  .upload-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .upload-file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .upload-file-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .upload-file-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: #fff;
+  }
+
+  .upload-file-detail {
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+  }
+
+  .upload-file-name {
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .upload-file-size {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .upload-file-remove {
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+
+  .upload-file-remove:hover {
+    background: #fee;
+    color: #cf1322;
+  }
+
+  #cloneAudioInput {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>MiMo TTS</h1>
+    <p>小米语音合成 Demo - MiMo-V2.5-TTS</p>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>合成文本</label>
+      <textarea id="text" placeholder="输入你想让 AI 说出的内容..."></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 2000</div>
+    </div>
+
+    <div class="field">
+      <label>音色</label>
+      <div class="voice-tabs">
+        <button class="voice-tab active" data-mode="preset">预置音色</button>
+        <button class="voice-tab" data-mode="clone">音色克隆</button>
+      </div>
+
+      <div id="presetPanel">
+        <div class="select-wrap">
+          <select id="voice"></select>
+        </div>
+      </div>
+
+      <div class="clone-panel" id="clonePanel">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-content" id="uploadContent">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="upload-text"><strong>点击上传</strong>或拖拽文件到此处</div>
+            <div class="upload-hint">支持 WAV / MP3，最大 10MB</div>
+            <div class="upload-hint" style="color: var(--accent); margin-top: 6px;">建议 5-15 秒纯人声音频，效果最佳</div>
+          </div>
+        </div>
+        <input type="file" id="cloneAudioInput" accept=".wav,.mp3,audio/wav,audio/mpeg">
+      </div>
+    </div>
+
+    <div class="style-section" id="styleSection"></div>
+
+    <button class="btn-primary" id="generateBtn" onclick="generate()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+      生成语音
+    </button>
+
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="player-card" id="playerCard">
+    <div class="player-header">
+      <div class="player-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+      </div>
+      <div class="player-info">
+        <h3>语音已生成</h3>
+        <p id="playerMeta"></p>
+      </div>
+    </div>
+    <audio id="audioPlayer" controls></audio>
+    <div class="player-footer">
+      <button class="btn-download" id="downloadBtn" onclick="downloadAudio()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        下载 WAV
+      </button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Powered by <a href="https://platform.xiaomimimo.com" target="_blank">Xiaomi MiMo API</a> | 限时免费</p>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">正在生成语音...</div>
+  <div class="loading-subtext" id="loadingHint">语音克隆需要较长处理时间，请耐心等待</div>
+  <div class="loading-time" id="loadingTime">0s</div>
+</div>
+
+<script>
+const voices = [
+  { id: "冰糖", name: "冰糖 (中文女)", lang: "中文", gender: "女性" },
+  { id: "茉莉", name: "茉莉 (中文女)", lang: "中文", gender: "女性" },
+  { id: "苏打", name: "苏打 (中文男)", lang: "中文", gender: "男性" },
+  { id: "白桦", name: "白桦 (中文男)", lang: "中文", gender: "男性" },
+  { id: "Mia", name: "Mia (英文女)", lang: "英文", gender: "女性" },
+  { id: "Chloe", name: "Chloe (英文女)", lang: "英文", gender: "女性" },
+  { id: "Milo", name: "Milo (英文男)", lang: "英文", gender: "男性" },
+  { id: "Dean", name: "Dean (英文男)", lang: "英文", gender: "男性" },
+];
+
+const styleGroups = [
+  { label: "基础情绪", options: ["开心","悲伤","愤怒","恐惧","惊讶","兴奋","委屈","平静","冷漠"] },
+  { label: "复合情绪", options: ["怅然","欣慰","无奈","愧疚","释然","嫉妒","厌倦","忐忑","动情"] },
+  { label: "整体语调", options: ["温柔","高冷","活泼","严肃","慵懒","俏皮","深沉","干练","凌厉"] },
+  { label: "音色定位", options: ["磁性","醇厚","清亮","空灵","稚嫩","苍老","甜美","沙哑","醇雅"] },
+  { label: "人设腔调", options: ["夹子音","御姐音","正太音","大叔音","台湾腔"] },
+  { label: "方言", options: ["东北话","四川话","河南话","粤语"] },
+];
+
+// Voice select
+const voiceSelect = document.getElementById("voice");
+voices.forEach(v => {
+  const opt = document.createElement("option");
+  opt.value = v.id;
+  opt.textContent = v.name;
+  voiceSelect.appendChild(opt);
+});
+
+// Voice mode tabs
+let voiceMode = "preset";
+let cloneAudioData = "";
+
+document.querySelectorAll(".voice-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".voice-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    voiceMode = tab.dataset.mode;
+    document.getElementById("presetPanel").style.display = voiceMode === "preset" ? "block" : "none";
+    document.getElementById("clonePanel").classList.toggle("visible", voiceMode === "clone");
+  });
+});
+
+// File upload
+const uploadZone = document.getElementById("uploadZone");
+const cloneInput = document.getElementById("cloneAudioInput");
+
+uploadZone.addEventListener("click", () => {
+  if (!cloneAudioData) cloneInput.click();
+});
+
+uploadZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  uploadZone.classList.add("dragover");
+});
+
+uploadZone.addEventListener("dragleave", () => {
+  uploadZone.classList.remove("dragover");
+});
+
+uploadZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if (file) handleCloneFile(file);
+});
+
+cloneInput.addEventListener("change", () => {
+  if (cloneInput.files[0]) handleCloneFile(cloneInput.files[0]);
+});
+
+function handleCloneFile(file) {
+  const validTypes = ["audio/wav", "audio/mpeg", "audio/mp3"];
+  if (!validTypes.includes(file.type) && !file.name.match(/\.(wav|mp3)$/i)) {
+    showError("仅支持 WAV 和 MP3 格式");
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showError("文件大小不能超过 10MB");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    cloneAudioData = e.target.result; // data:audio/...;base64,...
+    const sizeKB = Math.round(file.size / 1024);
+    const sizeStr = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
+    uploadZone.classList.add("has-file");
+    document.getElementById("uploadContent").innerHTML = `
+      <div class="upload-file-info">
+        <div class="upload-file-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+        </div>
+        <div class="upload-file-detail">
+          <div class="upload-file-name">${file.name}</div>
+          <div class="upload-file-size">${sizeStr}</div>
+        </div>
+        <button class="upload-file-remove" onclick="event.stopPropagation();removeCloneFile()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    `;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeCloneFile() {
+  cloneAudioData = "";
+  cloneInput.value = "";
+  uploadZone.classList.remove("has-file");
+  document.getElementById("uploadContent").innerHTML = `
+    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <div class="upload-text"><strong>点击上传</strong>或拖拽文件到此处</div>
+    <div class="upload-hint">支持 WAV / MP3，最大 10MB</div>
+    <div class="upload-hint" style="color: var(--accent); margin-top: 6px;">建议 5-15 秒纯人声音频，效果最佳</div>
+  `;
+}
+
+// Build style section
+const selectedStyles = new Set();
+const styleSection = document.getElementById("styleSection");
+
+// Selected summary bar
+const summaryBar = document.createElement("div");
+summaryBar.className = "selected-summary";
+summaryBar.innerHTML = '<span style="font-weight:600">已选</span><div class="selected-summary-tags" id="selectedTags"></div><button class="btn-clear-all" id="clearAllBtn">清除</button>';
+styleSection.appendChild(summaryBar);
+
+document.getElementById("clearAllBtn").addEventListener("click", () => {
+  selectedStyles.clear();
+  document.querySelectorAll(".style-tag.active").forEach(t => t.classList.remove("active"));
+  updateSummary();
+});
+
+function updateSummary() {
+  const container = document.getElementById("selectedTags");
+  const bar = document.querySelector(".selected-summary");
+  container.innerHTML = "";
+  if (selectedStyles.size === 0) {
+    bar.classList.remove("visible");
+    return;
+  }
+  bar.classList.add("visible");
+  selectedStyles.forEach(s => {
+    const chip = document.createElement("span");
+    chip.className = "selected-chip";
+    chip.innerHTML = `${s}<span class="selected-chip-remove" data-tag="${s}">&times;</span>`;
+    container.appendChild(chip);
+  });
+  container.querySelectorAll(".selected-chip-remove").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const tag = btn.dataset.tag;
+      selectedStyles.delete(tag);
+      document.querySelectorAll(`.style-tag`).forEach(t => {
+        if (t.textContent === tag) t.classList.remove("active");
+      });
+      updateSummary();
+    });
+  });
+}
+
+// Group selector dropdown
+const selectRow = document.createElement("div");
+selectRow.className = "style-group-select-row";
+selectRow.innerHTML = '<label>风格</label>';
+const groupSelect = document.createElement("select");
+groupSelect.id = "groupSelect";
+styleGroups.forEach((g, i) => {
+  const opt = document.createElement("option");
+  opt.value = i;
+  opt.textContent = g.label;
+  groupSelect.appendChild(opt);
+});
+selectRow.appendChild(groupSelect);
+styleSection.appendChild(selectRow);
+
+// Build all groups (only first visible by default)
+const groupElements = [];
+styleGroups.forEach((group, idx) => {
+  const groupDiv = document.createElement("div");
+  groupDiv.className = "style-group";
+  if (idx > 0) groupDiv.style.display = "none";
+
+  const title = document.createElement("div");
+  title.className = "style-group-title";
+  title.textContent = group.label;
+
+  const tagsDiv = document.createElement("div");
+  tagsDiv.className = "style-tags";
+  group.options.forEach(s => {
+    const tag = document.createElement("button");
+    tag.type = "button";
+    tag.className = "style-tag";
+    tag.textContent = s;
+    tag.addEventListener("click", () => {
+      if (selectedStyles.has(s)) {
+        selectedStyles.delete(s);
+        tag.classList.remove("active");
+      } else {
+        selectedStyles.add(s);
+        tag.classList.add("active");
+      }
+      updateSummary();
+    });
+    tagsDiv.appendChild(tag);
+  });
+
+  groupDiv.appendChild(title);
+  groupDiv.appendChild(tagsDiv);
+  styleSection.appendChild(groupDiv);
+  groupElements.push(groupDiv);
+});
+
+groupSelect.addEventListener("change", () => {
+  const idx = parseInt(groupSelect.value);
+  groupElements.forEach((el, i) => {
+    el.style.display = i === idx ? "block" : "none";
+  });
+});
+
+// Custom style
+const customDiv = document.createElement("div");
+customDiv.className = "style-custom";
+customDiv.innerHTML = `
+  <div class="custom-toggle" id="customToggle">
+    <svg class="custom-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    <span>自定义风格描述</span>
+  </div>
+  <div class="custom-body" id="customBody">
+    <textarea id="customStyle" placeholder="用自然语言描述你想要的语音风格..."></textarea>
+    <div class="tip">例如：用轻快上扬的语调，语速稍快，声音明亮有活力</div>
+  </div>
+`;
+styleSection.appendChild(customDiv);
+
+document.getElementById("customToggle").addEventListener("click", () => {
+  const toggle = document.getElementById("customToggle");
+  const body = document.getElementById("customBody");
+  const isOpen = body.classList.contains("open");
+  if (isOpen) {
+    body.classList.remove("open");
+    toggle.classList.remove("open");
+  } else {
+    body.classList.add("open");
+    toggle.classList.add("open");
+  }
+});
+
+// Text area char count
+const textArea = document.getElementById("text");
+textArea.addEventListener("input", () => {
+  const len = textArea.value.length;
+  document.getElementById("charCount").textContent = len;
+  document.getElementById("charCount").style.color = len > 2000 ? "#cf1322" : "";
+});
+
+let currentAudioB64 = "";
+let currentFile = "";
+let loadingTimer = null;
+
+async function generate() {
+  const text = textArea.value.trim();
+  const voice = voiceSelect.value;
+  const tags = [...selectedStyles].join(" ");
+  const natural = document.getElementById("customStyle")?.value.trim() || "";
+
+  const btn = document.getElementById("generateBtn");
+  const errorMsg = document.getElementById("errorMsg");
+  const playerCard = document.getElementById("playerCard");
+  const loadingOverlay = document.getElementById("loadingOverlay");
+  const loadingHint = document.getElementById("loadingHint");
+  const loadingTime = document.getElementById("loadingTime");
+
+  if (!text) { showError("请输入要合成的文本"); return; }
+  if (text.length > 2000) { showError("文本过长，请控制在 2000 字以内"); return; }
+  if (voiceMode === "clone" && !cloneAudioData) { showError("请上传参考音频"); return; }
+
+  errorMsg.classList.remove("visible");
+  playerCard.classList.remove("visible");
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> 生成中...';
+
+  // Show loading overlay
+  loadingOverlay.classList.add("visible");
+  if (voiceMode === "clone") {
+    loadingHint.textContent = "语音克隆需要较长处理时间，请耐心等待";
+  } else {
+    loadingHint.textContent = "正在合成语音...";
+  }
+
+  // Start timer
+  let elapsed = 0;
+  loadingTime.textContent = "0s";
+  loadingTimer = setInterval(() => {
+    elapsed++;
+    loadingTime.textContent = `${elapsed}s`;
+  }, 1000);
+
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text, voice, tags, natural,
+        voice_mode: voiceMode,
+        clone_audio: voiceMode === "clone" ? cloneAudioData : "",
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "请求失败");
+
+    currentAudioB64 = data.audio;
+    currentFile = data.file || "";
+    const audioPlayer = document.getElementById("audioPlayer");
+    audioPlayer.src = `data:audio/wav;base64,${data.audio}`;
+
+    const voiceName = voiceMode === "clone" ? "自定义音色" : (voices.find(v => v.id === voice)?.name || voice);
+    const styleLabel = tags ? ` | ${tags}` : "";
+    document.getElementById("playerMeta").textContent = `${voiceName}${styleLabel} | ${text.length} 字`;
+    playerCard.classList.add("visible");
+    audioPlayer.play();
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    clearInterval(loadingTimer);
+    loadingOverlay.classList.remove("visible");
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> 生成语音';
+  }
+}
+
+function downloadAudio() {
+  if (currentFile) window.location.href = `/api/download/${currentFile}`;
+}
+
+function showError(msg) {
+  const el = document.getElementById("errorMsg");
+  el.textContent = msg;
+  el.classList.add("visible");
+}
+
+document.getElementById("text").addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generate();
+});
+</script>
+
+</body>
+</html>

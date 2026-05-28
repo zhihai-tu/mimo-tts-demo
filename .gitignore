@@ -1,0 +1,25 @@
+# 环境配置文件（包含 API Key）
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# 输出文件
+outputs/
+demo/test_output.wav
+
+# 日志文件
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
