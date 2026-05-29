@@ -4,6 +4,7 @@ import json
 import logging
 import time
 import uuid
+import sqlite3
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from flask import Flask, request, jsonify, send_from_directory, send_file
@@ -16,7 +17,11 @@ load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
+CLONES_DIR = os.path.join(OUTPUT_DIR, "clones")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(CLONES_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(BASE_DIR, "voices.db")
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
@@ -45,6 +50,24 @@ client = OpenAI(
     base_url="https://token-plan-cn.xiaomimimo.com/v1",
 )
 
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS saved_voices (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            filename TEXT NOT NULL,
+            duration_sec REAL,
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
 VOICE_OPTIONS = [
     {"id": "冰糖", "name": "冰糖", "lang": "中文", "gender": "女性"},
     {"id": "茉莉", "name": "茉莉", "lang": "中文", "gender": "女性"},
@@ -69,6 +92,14 @@ def voices():
 
 @app.route("/api/tts", methods=["POST"])
 def tts():
+    try:
+        return _tts_inner()
+    except Exception as e:
+        logger.info(f"RESPONSE | error | {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def _tts_inner():
     if not MIMO_API_KEY:
         return jsonify({"error": "未配置 MIMO_API_KEY 环境变量"}), 400
 
@@ -79,12 +110,30 @@ def tts():
     natural = data.get("natural", "").strip()
     voice_mode = data.get("voice_mode", "preset")  # preset / clone
     clone_audio_b64 = data.get("clone_audio", "").strip()  # base64 with data: prefix
+    clone_voice_id = data.get("clone_voice_id", "").strip()  # saved voice id
 
     if not text:
         return jsonify({"error": "请输入文本内容"}), 400
 
-    if voice_mode == "clone" and not clone_audio_b64:
-        return jsonify({"error": "请上传参考音频"}), 400
+    if voice_mode == "clone" and not clone_audio_b64 and not clone_voice_id:
+        return jsonify({"error": "请上传或选择参考音频"}), 400
+
+    # If using saved voice, load from disk
+    if voice_mode == "clone" and clone_voice_id:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM saved_voices WHERE id = ?", (clone_voice_id,)).fetchone()
+        conn.close()
+        if not row:
+            return jsonify({"error": "所选音色不存在"}), 404
+        filepath = os.path.join(CLONES_DIR, row["filename"])
+        if not os.path.isfile(filepath):
+            return jsonify({"error": "音色文件丢失"}), 404
+        with open(filepath, "rb") as f:
+            audio_bytes = f.read()
+        ext = row["filename"].rsplit(".", 1)[-1]
+        mime = "audio/wav" if ext == "wav" else "audio/mpeg"
+        clone_audio_b64 = f"data:{mime};base64," + base64.b64encode(audio_bytes).decode()
 
     messages = []
 
@@ -140,6 +189,93 @@ def tts():
         elapsed = round(time.time() - t0, 2)
         logger.info(f"RESPONSE | error | {e} | elapsed={elapsed}s")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/voices/saved", methods=["GET"])
+def list_saved_voices():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT * FROM saved_voices ORDER BY created_at DESC").fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/voices/saved", methods=["POST"])
+def save_voice():
+    data = request.json
+    name = data.get("name", "").strip()
+    audio_b64 = data.get("audio", "").strip()  # data:audio/...;base64,...
+
+    if not name:
+        return jsonify({"error": "请输入音色名称"}), 400
+    if not audio_b64:
+        return jsonify({"error": "请提供音频数据"}), 400
+
+    voice_id = uuid.uuid4().hex[:12]
+    ext = "wav"
+    if "audio/mpeg" in audio_b64 or "audio/mp3" in audio_b64:
+        ext = "mp3"
+    filename = f"{voice_id}.{ext}"
+    filepath = os.path.join(CLONES_DIR, filename)
+
+    # Decode and save
+    header, b64data = audio_b64.split(",", 1)
+    audio_bytes = base64.b64decode(b64data)
+    with open(filepath, "wb") as f:
+        f.write(audio_bytes)
+
+    created_at = datetime.now().isoformat()
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute(
+        "INSERT INTO saved_voices (id, name, filename, created_at) VALUES (?, ?, ?, ?)",
+        (voice_id, name, filename, created_at),
+    )
+    conn.commit()
+    conn.close()
+
+    logger.info(f"VOICE_SAVED | id={voice_id} | name={name} | file={filename}")
+    return jsonify({"id": voice_id, "name": name, "filename": filename, "created_at": created_at})
+
+
+@app.route("/api/voices/saved/<voice_id>", methods=["DELETE"])
+def delete_saved_voice(voice_id):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM saved_voices WHERE id = ?", (voice_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "音色不存在"}), 404
+
+    filepath = os.path.join(CLONES_DIR, row["filename"])
+    if os.path.isfile(filepath):
+        os.remove(filepath)
+
+    conn.execute("DELETE FROM saved_voices WHERE id = ?", (voice_id,))
+    conn.commit()
+    conn.close()
+
+    logger.info(f"VOICE_DELETED | id={voice_id}")
+    return jsonify({"ok": True})
+
+
+@app.route("/api/voices/saved/<voice_id>/rename", methods=["POST"])
+def rename_saved_voice(voice_id):
+    data = request.json
+    name = data.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "名称不能为空"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM saved_voices WHERE id = ?", (voice_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": "音色不存在"}), 404
+
+    conn.execute("UPDATE saved_voices SET name = ? WHERE id = ?", (name, voice_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "name": name})
 
 
 @app.route("/api/download/<filename>")

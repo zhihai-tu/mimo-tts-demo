@@ -15,11 +15,18 @@ ENV/
 outputs/
 demo/test_output.wav
 
+# 开发文档
+docs/handoff/
+
 # 日志文件
 logs/
+
+# 数据库
+voices.db
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store

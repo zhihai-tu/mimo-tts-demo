@@ -178,6 +178,324 @@
     cursor: not-allowed;
   }
 
+  /* Record button */
+  .record-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 24px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+  }
+
+  .record-btn:hover {
+    border-color: #ff4d4f;
+    color: #ff4d4f;
+  }
+
+  .record-btn.recording {
+    border-color: #ff4d4f;
+    background: #fff2f2;
+    color: #ff4d4f;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(255, 77, 79, 0); }
+  }
+
+  .record-btn .rec-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff4d4f;
+    flex-shrink: 0;
+  }
+
+  .record-btn.recording .rec-dot {
+    animation: blink 1s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .record-timer {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 12px;
+    display: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .record-timer.visible {
+    display: block;
+  }
+
+  .record-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* Divider */
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .or-divider::before, .or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Voice library */
+  .voice-library {
+    margin-top: 16px;
+  }
+
+  .voice-library-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .voice-library-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .voice-library-empty {
+    font-size: 13px;
+    color: #b0b0b0;
+    text-align: center;
+    padding: 16px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+
+  .voice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+
+  .voice-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .voice-list-item:hover {
+    border-color: var(--accent);
+    background: #f0f5ff;
+  }
+
+  .voice-list-item.selected {
+    border-color: var(--accent);
+    background: #f0f5ff;
+    box-shadow: 0 0 0 2px rgba(0,113,227,0.15);
+  }
+
+  .voice-list-item .vi-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .voice-list-item .vi-icon svg {
+    width: 14px;
+    height: 14px;
+    fill: #fff;
+  }
+
+  .voice-list-item .vi-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .voice-list-item .vi-name {
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .voice-list-item .vi-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .voice-list-item .vi-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .vi-action-btn {
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .vi-action-btn:hover {
+    background: var(--input-bg);
+    color: var(--accent);
+  }
+
+  .vi-action-btn.delete:hover {
+    background: #fee;
+    color: #cf1322;
+  }
+
+  .vi-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Rename input */
+  .rename-input {
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    background: #fff;
+    color: var(--text);
+    width: 100%;
+  }
+
+  /* Save voice modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-overlay.visible {
+    display: flex;
+  }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    animation: fadeUp 0.25s ease;
+  }
+
+  .modal-box h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .modal-box input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 16px;
+  }
+
+  .modal-box input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+  }
+
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .modal-btn-cancel {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+  }
+
+  .modal-btn-cancel:hover {
+    background: var(--input-bg);
+  }
+
+  .modal-btn-save {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .modal-btn-save:hover {
+    background: var(--accent-hover);
+  }
+
   .btn-primary .spinner {
     width: 20px;
     height: 20px;
@@ -796,15 +1114,30 @@
       </div>
 
       <div class="clone-panel" id="clonePanel">
+        <button class="record-btn" id="recordBtn" onclick="toggleRecord()">
+          <span class="rec-dot"></span>
+          <span id="recordBtnText">开始录音</span>
+        </button>
+        <div class="record-timer" id="recordTimer">00:00</div>
+        <div class="record-hint">点击录制 5-15 秒纯人声音频，效果最佳</div>
+
+        <div class="or-divider">或</div>
+
         <div class="upload-zone" id="uploadZone">
           <div class="upload-content" id="uploadContent">
             <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <div class="upload-text"><strong>点击上传</strong>或拖拽文件到此处</div>
             <div class="upload-hint">支持 WAV / MP3，最大 10MB</div>
-            <div class="upload-hint" style="color: var(--accent); margin-top: 6px;">建议 5-15 秒纯人声音频，效果最佳</div>
           </div>
         </div>
         <input type="file" id="cloneAudioInput" accept=".wav,.mp3,audio/wav,audio/mpeg">
+
+        <div class="voice-library" id="voiceLibrary">
+          <div class="voice-library-header">
+            <span class="voice-library-title">我的音色库</span>
+          </div>
+          <div id="voiceLibraryList"></div>
+        </div>
       </div>
     </div>
 
@@ -848,6 +1181,18 @@
   <div class="loading-text">正在生成语音...</div>
   <div class="loading-subtext" id="loadingHint">语音克隆需要较长处理时间，请耐心等待</div>
   <div class="loading-time" id="loadingTime">0s</div>
+</div>
+
+<!-- Save voice modal -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal-box">
+    <h3>保存音色</h3>
+    <input type="text" id="saveVoiceName" placeholder="给这个音色起个名字..." maxlength="30">
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="closeSaveModal()">取消</button>
+      <button class="modal-btn-save" onclick="confirmSaveVoice()">保存</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -965,9 +1310,329 @@ function removeCloneFile() {
     <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     <div class="upload-text"><strong>点击上传</strong>或拖拽文件到此处</div>
     <div class="upload-hint">支持 WAV / MP3，最大 10MB</div>
-    <div class="upload-hint" style="color: var(--accent); margin-top: 6px;">建议 5-15 秒纯人声音频，效果最佳</div>
   `;
 }
+
+// ========== Recording ==========
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let recordTimerInterval = null;
+let recordSeconds = 0;
+let recordedBlob = null;
+
+async function toggleRecord() {
+  if (isRecording) {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Prefer wav/webm; fall back to whatever is available
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? "audio/webm;codecs=opus" : "";
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      recordedBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+      stream.getTracks().forEach(t => t.stop());
+
+      try {
+        // Convert webm/opus to wav using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuf = await recordedBlob.arrayBuffer();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuf);
+
+        // Encode as 16-bit PCM wav
+        const numChannels = audioBuffer.numberOfChannels;
+        const sampleRate = audioBuffer.sampleRate;
+        const length = audioBuffer.length;
+        const bytesPerSample = 2;
+        const blockAlign = numChannels * bytesPerSample;
+        const dataSize = length * blockAlign;
+        const buffer = new ArrayBuffer(44 + dataSize);
+        const view = new DataView(buffer);
+
+        // WAV header
+        const writeStr = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+        writeStr(0, "RIFF");
+        view.setUint32(4, 36 + dataSize, true);
+        writeStr(8, "WAVE");
+        writeStr(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, 16, true);
+        writeStr(36, "data");
+        view.setUint32(40, dataSize, true);
+
+        // Interleave channels and write PCM
+        const channels = [];
+        for (let c = 0; c < numChannels; c++) channels.push(audioBuffer.getChannelData(c));
+        let offset = 44;
+        for (let i = 0; i < length; i++) {
+          for (let c = 0; c < numChannels; c++) {
+            const sample = Math.max(-1, Math.min(1, channels[c][i]));
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+            offset += 2;
+          }
+        }
+
+        recordedBlob = new Blob([buffer], { type: "audio/wav" });
+        audioCtx.close();
+      } catch (e) {
+        console.warn("WAV conversion failed, using original format:", e);
+      }
+
+      // Convert to base64 for TTS API
+      const reader = new FileReader();
+      reader.onload = () => {
+        cloneAudioData = reader.result;
+        // Show recorded file info in upload zone
+        const sizeKB = Math.round(recordedBlob.size / 1024);
+        const sizeStr = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
+        uploadZone.classList.add("has-file");
+        document.getElementById("uploadContent").innerHTML = `
+          <div class="upload-file-info">
+            <div class="upload-file-icon" style="background: #ff4d4f;">
+              <svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+            </div>
+            <div class="upload-file-detail">
+              <div class="upload-file-name">录音 ${new Date().toLocaleTimeString()}</div>
+              <div class="upload-file-size">${sizeStr} · ${formatTime(recordSeconds)}</div>
+            </div>
+            <button class="upload-file-remove" onclick="event.stopPropagation();removeCloneFile()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn-download" onclick="event.stopPropagation();openSaveModal()" style="flex:1; justify-content:center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              保存到音色库
+            </button>
+          </div>
+        `;
+      };
+      reader.readAsDataURL(recordedBlob);
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    recordSeconds = 0;
+    const btn = document.getElementById("recordBtn");
+    btn.classList.add("recording");
+    document.getElementById("recordBtnText").textContent = "停止录音";
+    const timer = document.getElementById("recordTimer");
+    timer.classList.add("visible");
+    timer.textContent = "00:00";
+    recordTimerInterval = setInterval(() => {
+      recordSeconds++;
+      timer.textContent = formatTime(recordSeconds);
+    }, 1000);
+  } catch (err) {
+    console.error("Recording error:", err);
+    let msg = "无法访问麦克风";
+    if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+      msg = "麦克风权限被拒绝，请在浏览器地址栏右侧点击麦克风图标允许权限，或在系统设置 > 隐私 > 麦克风中开启浏览器权限";
+    } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+      msg = "未检测到麦克风设备，请确认已连接麦克风";
+    } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+      msg = "麦克风被其他应用占用，请关闭其他正在使用麦克风的程序";
+    }
+    showError(msg);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.stop();
+  }
+  isRecording = false;
+  clearInterval(recordTimerInterval);
+  const btn = document.getElementById("recordBtn");
+  btn.classList.remove("recording");
+  document.getElementById("recordBtnText").textContent = "开始录音";
+  document.getElementById("recordTimer").classList.remove("visible");
+}
+
+function formatTime(sec) {
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+// ========== Voice Library ==========
+let savedVoices = [];
+let selectedSavedVoiceId = null;
+
+async function loadSavedVoices() {
+  try {
+    const res = await fetch("/api/voices/saved");
+    savedVoices = await res.json();
+    renderVoiceLibrary();
+  } catch (e) {
+    console.error("Failed to load voices:", e);
+  }
+}
+
+function renderVoiceLibrary() {
+  const container = document.getElementById("voiceLibraryList");
+  if (savedVoices.length === 0) {
+    container.innerHTML = '<div class="voice-library-empty">还没有保存的音色，录制后可以保存到音色库</div>';
+    return;
+  }
+  container.innerHTML = "";
+  const list = document.createElement("div");
+  list.className = "voice-list";
+  savedVoices.forEach(v => {
+    const item = document.createElement("div");
+    item.className = "voice-list-item" + (selectedSavedVoiceId === v.id ? " selected" : "");
+    item.onclick = (e) => {
+      if (e.target.closest(".vi-actions")) return;
+      selectSavedVoice(v.id);
+    };
+    item.innerHTML = `
+      <div class="vi-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+      </div>
+      <div class="vi-info">
+        <div class="vi-name" id="viName_${v.id}">${v.name}</div>
+        <div class="vi-date">${v.created_at ? new Date(v.created_at).toLocaleDateString() : ""}</div>
+      </div>
+      <div class="vi-actions">
+        <button class="vi-action-btn" onclick="startRename('${v.id}', '${v.name.replace(/'/g, "\\'")}')" title="重命名">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="vi-action-btn delete" onclick="deleteSavedVoice('${v.id}')" title="删除">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+  container.appendChild(list);
+}
+
+function selectSavedVoice(id) {
+  if (selectedSavedVoiceId === id) {
+    selectedSavedVoiceId = null;
+    cloneAudioData = "";
+    uploadZone.classList.remove("has-file");
+    document.getElementById("uploadContent").innerHTML = `
+      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="upload-text"><strong>点击上传</strong>或拖拽文件到此处</div>
+      <div class="upload-hint">支持 WAV / MP3，最大 10MB</div>
+    `;
+  } else {
+    selectedSavedVoiceId = id;
+    cloneAudioData = "";
+    // Clear upload zone visually
+    uploadZone.classList.remove("has-file");
+    document.getElementById("uploadContent").innerHTML = `
+      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="upload-text"><strong>点击上传</strong>或拖拽文件到此处</div>
+      <div class="upload-hint">支持 WAV / MP3，最大 10MB</div>
+    `;
+  }
+  renderVoiceLibrary();
+}
+
+async function deleteSavedVoice(id) {
+  if (!confirm("确定删除这个音色？")) return;
+  try {
+    await fetch(`/api/voices/saved/${id}`, { method: "DELETE" });
+    if (selectedSavedVoiceId === id) selectedSavedVoiceId = null;
+    await loadSavedVoices();
+  } catch (e) {
+    showError("删除失败");
+  }
+}
+
+function startRename(id, currentName) {
+  const nameEl = document.getElementById(`viName_${id}`);
+  if (!nameEl) return;
+  nameEl.innerHTML = `<input class="rename-input" type="text" value="${currentName}" maxlength="30"
+    onblur="finishRename('${id}', this.value)"
+    onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){this.value='${currentName.replace(/'/g, "\\'")}';this.blur();}">`;
+  nameEl.querySelector("input").focus();
+  nameEl.querySelector("input").select();
+}
+
+async function finishRename(id, newName) {
+  newName = newName.trim();
+  if (!newName) { await loadSavedVoices(); return; }
+  try {
+    await fetch(`/api/voices/saved/${id}/rename`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newName }),
+    });
+    await loadSavedVoices();
+  } catch (e) {
+    showError("重命名失败");
+  }
+}
+
+// ========== Save Voice Modal ==========
+function openSaveModal() {
+  if (!recordedBlob) { showError("请先录音"); return; }
+  const modal = document.getElementById("saveModal");
+  modal.classList.add("visible");
+  const input = document.getElementById("saveVoiceName");
+  input.value = "";
+  input.focus();
+}
+
+function closeSaveModal() {
+  document.getElementById("saveModal").classList.remove("visible");
+}
+
+async function confirmSaveVoice() {
+  const name = document.getElementById("saveVoiceName").value.trim();
+  if (!name) return;
+  if (!recordedBlob) { showError("录音数据丢失，请重新录制"); closeSaveModal(); return; }
+
+  // Convert recorded blob to base64
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const res = await fetch("/api/voices/saved", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, audio: reader.result }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      closeSaveModal();
+      recordedBlob = null;
+      await loadSavedVoices();
+    } catch (e) {
+      showError("保存失败: " + e.message);
+    }
+  };
+  reader.readAsDataURL(recordedBlob);
+}
+
+// Enter key in save modal
+document.getElementById("saveVoiceName").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") confirmSaveVoice();
+  if (e.key === "Escape") closeSaveModal();
+});
+
+// Load saved voices on startup
+loadSavedVoices();
 
 // Build style section
 const selectedStyles = new Set();
@@ -1127,7 +1792,7 @@ async function generate() {
 
   if (!text) { showError("请输入要合成的文本"); return; }
   if (text.length > 2000) { showError("文本过长，请控制在 2000 字以内"); return; }
-  if (voiceMode === "clone" && !cloneAudioData) { showError("请上传参考音频"); return; }
+  if (voiceMode === "clone" && !cloneAudioData && !selectedSavedVoiceId) { showError("请上传、录制或选择参考音频"); return; }
 
   errorMsg.classList.remove("visible");
   playerCard.classList.remove("visible");
@@ -1158,6 +1823,7 @@ async function generate() {
         text, voice, tags, natural,
         voice_mode: voiceMode,
         clone_audio: voiceMode === "clone" ? cloneAudioData : "",
+        clone_voice_id: voiceMode === "clone" ? selectedSavedVoiceId : "",
       }),
     });
     const data = await res.json();
