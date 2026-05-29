@@ -1,16 +1,17 @@
-import os
 import base64
 import json
 import logging
+import os
+import sqlite3
 import time
 import uuid
-import sqlite3
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
-from flask import Flask, request, jsonify, send_from_directory, send_file
+
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from openai import OpenAI
-from dotenv import load_dotenv
 
 # 加载 .env 配置文件
 load_dotenv()
@@ -41,13 +42,16 @@ handler.setFormatter(logging.Formatter("%(asctime)s | %(message)s"))
 logger.addHandler(handler)
 
 MIMO_API_KEY = os.environ.get("MIMO_API_KEY", "")
+MIMO_BASE_URL = os.environ.get("MIMO_BASE_URL", "")
 
 if not MIMO_API_KEY:
     raise ValueError("请在 .env 文件中配置 MIMO_API_KEY")
+if not MIMO_BASE_URL:
+    raise ValueError("请在 .env 文件中配置 MIMO_BASE_URL")
 
 client = OpenAI(
     api_key=MIMO_API_KEY,
-    base_url="https://token-plan-cn.xiaomimimo.com/v1",
+    base_url=MIMO_BASE_URL,
 )
 
 
@@ -122,7 +126,9 @@ def _tts_inner():
     if voice_mode == "clone" and clone_voice_id:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
-        row = conn.execute("SELECT * FROM saved_voices WHERE id = ?", (clone_voice_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM saved_voices WHERE id = ?", (clone_voice_id,)
+        ).fetchone()
         conn.close()
         if not row:
             return jsonify({"error": "所选音色不存在"}), 404
@@ -133,7 +139,9 @@ def _tts_inner():
             audio_bytes = f.read()
         ext = row["filename"].rsplit(".", 1)[-1]
         mime = "audio/wav" if ext == "wav" else "audio/mpeg"
-        clone_audio_b64 = f"data:{mime};base64," + base64.b64encode(audio_bytes).decode()
+        clone_audio_b64 = (
+            f"data:{mime};base64," + base64.b64encode(audio_bytes).decode()
+        )
 
     messages = []
 
@@ -154,8 +162,12 @@ def _tts_inner():
         audio_body = {"format": "wav", "voice": voice}
 
     log_voice = f"clone" if voice_mode == "clone" else voice
-    logger.info(f"REQUEST | model={model} | voice={log_voice} | tags={tags} | natural={natural[:100]}")
-    logger.info(f"REQUEST | messages=\n{json.dumps(messages, ensure_ascii=False, indent=2)}")
+    logger.info(
+        f"REQUEST | model={model} | voice={log_voice} | tags={tags} | natural={natural[:100]}"
+    )
+    logger.info(
+        f"REQUEST | messages=\n{json.dumps(messages, ensure_ascii=False, indent=2)}"
+    )
 
     t0 = time.time()
     try:
@@ -174,10 +186,14 @@ def _tts_inner():
             audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
 
         elapsed = round(time.time() - t0, 2)
-        logger.info(f"RESPONSE | ok | audio_size={len(audio_b64)} chars | elapsed={elapsed}s")
+        logger.info(
+            f"RESPONSE | ok | audio_size={len(audio_b64)} chars | elapsed={elapsed}s"
+        )
 
         audio_bytes = base64.b64decode(audio_b64)
-        filename = f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}.wav"
+        filename = (
+            f"tts_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}.wav"
+        )
         filepath = os.path.join(OUTPUT_DIR, filename)
         with open(filepath, "wb") as f:
             f.write(audio_bytes)
@@ -195,7 +211,9 @@ def _tts_inner():
 def list_saved_voices():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    rows = conn.execute("SELECT * FROM saved_voices ORDER BY created_at DESC").fetchall()
+    rows = conn.execute(
+        "SELECT * FROM saved_voices ORDER BY created_at DESC"
+    ).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
 
@@ -234,14 +252,18 @@ def save_voice():
     conn.close()
 
     logger.info(f"VOICE_SAVED | id={voice_id} | name={name} | file={filename}")
-    return jsonify({"id": voice_id, "name": name, "filename": filename, "created_at": created_at})
+    return jsonify(
+        {"id": voice_id, "name": name, "filename": filename, "created_at": created_at}
+    )
 
 
 @app.route("/api/voices/saved/<voice_id>", methods=["DELETE"])
 def delete_saved_voice(voice_id):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT * FROM saved_voices WHERE id = ?", (voice_id,)).fetchone()
+    row = conn.execute(
+        "SELECT * FROM saved_voices WHERE id = ?", (voice_id,)
+    ).fetchone()
     if not row:
         conn.close()
         return jsonify({"error": "音色不存在"}), 404
@@ -267,7 +289,9 @@ def rename_saved_voice(voice_id):
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT * FROM saved_voices WHERE id = ?", (voice_id,)).fetchone()
+    row = conn.execute(
+        "SELECT * FROM saved_voices WHERE id = ?", (voice_id,)
+    ).fetchone()
     if not row:
         conn.close()
         return jsonify({"error": "音色不存在"}), 404

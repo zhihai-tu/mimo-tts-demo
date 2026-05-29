@@ -26,17 +26,20 @@ cd mimo-tts-demo
 pip install -r requirements.txt
 ```
 
-### 3. 配置 API Key
+### 3. 配置环境变量
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env`，填入你的 API Key：
+编辑 `.env`，填入你的 API Key 和 Base URL：
 
 ```
 MIMO_API_KEY=你的API密钥
+MIMO_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
 ```
+
+两个配置项均为必填，缺少任意一项启动时会报错提示。
 
 ### 4. 启动服务
 
